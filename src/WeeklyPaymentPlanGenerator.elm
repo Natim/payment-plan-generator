@@ -126,7 +126,6 @@ optimal_interest_rate paymentPlan =
         planDurations =
             List.repeat installmentsCount 0
                 |> List.indexedMap (\i _ -> 7 * (i + 1))
-                |> Debug.log "Durations"
 
         f_sum x =
             List.map2 (\d installment -> toFloat installment.totalAmount * (1 / (1 + x)) ^ (toFloat d / 365)) planDurations paymentPlan
