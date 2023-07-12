@@ -11,27 +11,42 @@ scheduleWeeklyPaymentDates installments_count starting_date =
         |> List.map (\i -> TE.add Week i utc starting_date)
 
 
-getWeeklyPaymentPlan : Int -> String -> Int -> Int -> List Installment
-getWeeklyPaymentPlan installmentsCount startingDate purchaseAmount customerFee =
+getWeeklyPaymentPlan : Int -> String -> Int -> Int -> Int -> List Installment
+getWeeklyPaymentPlan installmentsCount startingDate offset purchaseAmount customerFee =
     let
         dates =
-            List.map Days.toString <| scheduleWeeklyPaymentDates installmentsCount (Days.toPosix startingDate)
+            List.map Days.toString <| scheduleWeeklyPaymentDates (installmentsCount + offset) (Days.toPosix startingDate)
 
         totalPayAmount =
             (toFloat (purchaseAmount + customerFee) / toFloat installmentsCount)
                 |> round
 
         totalAmountPhasing =
-            List.repeat installmentsCount totalPayAmount
+            List.concat
+                [ List.repeat offset 0
+                , List.repeat installmentsCount totalPayAmount
+                ]
 
         capitalAmount =
             (toFloat purchaseAmount / toFloat installmentsCount) |> round
 
+        capitalAmountPhasing =
+            List.concat
+                [ List.repeat offset 0
+                , List.repeat installmentsCount capitalAmount
+                ]
+
         commissionAmount =
             (toFloat customerFee / toFloat installmentsCount) |> round
+
+        commissionAmountPhasing =
+            List.concat
+                [ List.repeat offset 0
+                , List.repeat installmentsCount commissionAmount
+                ]
     in
     List.map4 Installment
         dates
         totalAmountPhasing
-        (List.repeat installmentsCount capitalAmount)
-        (List.repeat installmentsCount commissionAmount)
+        capitalAmountPhasing
+        commissionAmountPhasing

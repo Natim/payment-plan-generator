@@ -19,6 +19,7 @@ import Utils exposing (euros)
 type alias Model =
     { purchaseAmount : Maybe Float
     , startDate : Maybe String
+    , offset : Int
     , installmentsCount : Maybe Int
     , paidAmount : Maybe Float
     , paymentPlan : List Days.Installment
@@ -35,6 +36,7 @@ type Msg
     | InstallmentsCountChanged String
     | CurrencyChanged FieldType (Maybe Float)
     | ReceiveDate Date
+    | UpdateOffset String
 
 
 main : Program () Model Msg
@@ -51,6 +53,7 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     ( { purchaseAmount = Just 300000
       , startDate = Nothing
+      , offset = 1
       , installmentsCount = Just 16
       , paidAmount = Just 312660
       , paymentPlan = []
@@ -65,7 +68,13 @@ update msg model =
         newModel =
             case msg of
                 ReceiveDate today ->
-                    { model | startDate = Date.toIsoString today |> Just }
+                    let
+                        startDate =
+                            Date.toIsoString today
+                                |> Days.toPosix
+                                |> TE.ceiling Monday utc
+                    in
+                    { model | startDate = startDate |> Days.toString |> Just }
 
                 DateChanged value ->
                     { model | startDate = Just value }
@@ -78,6 +87,9 @@ update msg model =
 
                 CurrencyChanged PaidAmount value ->
                     { model | paidAmount = value }
+
+                UpdateOffset value ->
+                    { model | offset = String.toInt value |> Maybe.withDefault 1 }
     in
     ( { newModel | paymentPlan = updatePaymentPlan newModel }, Cmd.none )
 
@@ -91,6 +103,7 @@ updatePaymentPlan model =
             Commission.getWeeklyPaymentPlan
                 installmentsCount
                 startDate
+                model.offset
                 (round <| purchaseAmount * 100)
                 (round <| (paidAmount - purchaseAmount) * 100)
 
@@ -111,7 +124,9 @@ optimal_interest_rate paymentPlan =
             List.length paymentPlan
 
         planDurations =
-            List.repeat installmentsCount 7
+            List.repeat installmentsCount 0
+                |> List.indexedMap (\i _ -> 7 * (i + 1))
+                |> Debug.log "Durations"
 
         f_sum x =
             List.map2 (\d installment -> toFloat installment.totalAmount * (1 / (1 + x)) ^ (toFloat d / 365)) planDurations paymentPlan
@@ -217,7 +232,7 @@ viewPaymentPlan paymentPlan =
 
 
 view : Model -> Html Msg
-view { startDate, purchaseAmount, installmentsCount, paidAmount, paymentPlan } =
+view { startDate, offset, purchaseAmount, installmentsCount, paidAmount, paymentPlan } =
     div []
         [ div [ class "col-sm-6" ]
             [ div [ class "form-group col-sm-6" ]
@@ -258,6 +273,22 @@ view { startDate, purchaseAmount, installmentsCount, paidAmount, paymentPlan } =
                             ]
                             []
                         , span [ class "input-group-addon" ] [ text "fois" ]
+                        ]
+                    ]
+                ]
+            , div [ class "form-group col-sm-6" ]
+                [ label [ for "offset", class "col-sm-6 control-label" ] [ text "Décalage" ]
+                , div [ class "col-sm-6" ]
+                    [ div [ class "input-group" ]
+                        [ input
+                            [ type_ "text"
+                            , class "form-control"
+                            , id "offset"
+                            , value <| String.fromInt <| offset
+                            , onInput <| UpdateOffset
+                            ]
+                            []
+                        , span [ class "input-group-addon" ] [ text "semaines" ]
                         ]
                     ]
                 ]
