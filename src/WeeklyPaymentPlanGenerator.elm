@@ -1,16 +1,15 @@
-module PaymentPlanGenerator exposing (main)
+module WeeklyPaymentPlanGenerator exposing (main)
 
 import Browser
+import Commission
 import Date exposing (Date)
 import Days
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Input.Float as CurrencyInput
-import Interest
 import Round
 import Task
-import Time exposing (Month(..))
 import Utils exposing (euros)
 
 
@@ -47,10 +46,10 @@ main =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { purchaseAmount = Just 16000
+    ( { purchaseAmount = Just 300000
       , startDate = Nothing
-      , installmentsCount = Just 12
-      , paidAmount = Just 17800
+      , installmentsCount = Just 16
+      , paidAmount = Just 312660
       , paymentPlan = []
       }
     , Date.today |> Task.perform ReceiveDate
@@ -86,7 +85,7 @@ updatePaymentPlan model =
         ( ( model.purchaseAmount, model.startDate ), ( model.installmentsCount, model.paidAmount ) )
     of
         ( ( Just purchaseAmount, Just startDate ), ( Just installmentsCount, Just paidAmount ) ) ->
-            Interest.getCreditPaymentPlan
+            Commission.getWeeklyPaymentPlan
                 installmentsCount
                 startDate
                 (round <| purchaseAmount * 100)
@@ -96,6 +95,28 @@ updatePaymentPlan model =
             []
 
 
+optimal_interest_rate : Int -> List Days.Installment -> Maybe Float
+optimal_interest_rate purchaseAmount paymentPlan =
+    let
+        totalAmount =
+            paymentPlan
+                |> List.map (\installment -> installment.totalAmount)
+                |> List.sum
+
+        nbWeeks =
+            List.length paymentPlan + 1
+
+        nbMonths =
+            toFloat nbWeeks * 12 / 52
+    in
+    if totalAmount /= 0 then
+        (toFloat (totalAmount - purchaseAmount) / toFloat totalAmount * nbMonths)
+            |> Just
+
+    else
+        Nothing
+
+
 annual_interest_rate : Maybe Float -> List Days.Installment -> String
 annual_interest_rate maybe_purchaseAmount paymentPlan =
     let
@@ -103,7 +124,7 @@ annual_interest_rate maybe_purchaseAmount paymentPlan =
             maybe_purchaseAmount
                 |> Maybe.andThen
                     (\purchaseAmount ->
-                        Interest.optimal_interest_rate (round <| purchaseAmount * 100) paymentPlan
+                        optimal_interest_rate (round <| purchaseAmount * 100) paymentPlan
                     )
     in
     case maybe_taeg of
@@ -159,14 +180,6 @@ viewPaymentPlan paymentPlan =
             text ""
 
         _ ->
-            let
-                feeTitle =
-                    if List.length paymentPlan > 4 then
-                        "Intérêts"
-
-                    else
-                        "Frais client"
-            in
             table [ class "table table-condensed" ]
                 [ thead []
                     [ tr []
@@ -179,7 +192,7 @@ viewPaymentPlan paymentPlan =
                         , th []
                             [ text "Capital" ]
                         , th []
-                            [ text feeTitle ]
+                            [ text "Commission" ]
                         ]
                     ]
                 , List.indexedMap viewInstallment paymentPlan |> tbody []

@@ -1,4 +1,4 @@
-module Interest exposing (getCreditPaymentPlan, optimal_interest_rate, show)
+module Interest exposing (getCreditPaymentPlan, optimal_interest_rate, rateWithinDays, show)
 
 import Days exposing (Installment, timeBetweenPayments)
 import Newton
