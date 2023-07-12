@@ -14,28 +14,12 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">
-                        Generate your monthly payment plan
+                        Generate your payment plan
                     </h3>
                 </div>
                 <div class="panel-body">
                     <form class="form-horizontal">
-                        <div id="monthly-app"></div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-xs-12">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">
-                        Generate your weekly payment plan
-                    </h3>
-                </div>
-                <div class="panel-body">
-                    <form class="form-horizontal">
-                        <div id="weekly-app"></div>
+                        <div id="app"></div>
                     </form>
                 </div>
             </div>
@@ -43,15 +27,9 @@
     </div>
   <script src="app.js"></script>
   <script>
-    const monthly_element = document.getElementById("monthly-app");
-    const monthly_app = Elm.PaymentPlanGenerator.init({
-      node: monthly_element,
-      flags: {}
-    });
-
-    const weekly_element = document.getElementById("weekly-app");
-    const weekly_app = Elm.WeeklyPaymentPlanGenerator.init({
-      node: weekly_element,
+    const element = document.getElementById("app");
+    const app = Elm.PaymentPlanGenerator.init({
+      node: element,
       flags: {}
     });
   </script>
