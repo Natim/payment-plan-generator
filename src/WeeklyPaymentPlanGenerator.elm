@@ -8,8 +8,11 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Input.Float as CurrencyInput
+import Newton
 import Round
 import Task
+import Time exposing (utc)
+import Time.Extra as TE exposing (Interval(..))
 import Utils exposing (euros)
 
 
@@ -95,26 +98,40 @@ updatePaymentPlan model =
             []
 
 
-optimal_interest_rate : Int -> List Days.Installment -> Maybe Float
-optimal_interest_rate purchaseAmount paymentPlan =
+optimal_interest_rate : List Days.Installment -> Maybe Float
+optimal_interest_rate paymentPlan =
     let
-        totalAmount =
+        purchaseAmount =
             paymentPlan
-                |> List.map (\installment -> installment.totalAmount)
+                |> List.map (\installment -> installment.purchaseAmount)
+                |> List.sum
+                |> toFloat
+
+        installmentsCount =
+            List.length paymentPlan
+
+        planDurations =
+            List.repeat installmentsCount 7
+
+        f_sum x =
+            List.map2 (\d installment -> toFloat installment.totalAmount * (1 / (1 + x)) ^ (toFloat d / 365)) planDurations paymentPlan
                 |> List.sum
 
-        nbWeeks =
-            List.length paymentPlan + 1
+        f x =
+            purchaseAmount - f_sum x
 
-        nbMonths =
-            toFloat nbWeeks * 12 / 52
+        maybe_taeg =
+            Newton.optimize f
     in
-    if totalAmount /= 0 then
-        (toFloat (totalAmount - purchaseAmount) / toFloat totalAmount * nbMonths)
-            |> Just
+    maybe_taeg
+        |> Maybe.andThen
+            (\taeg ->
+                if taeg > 10 || taeg < 0 then
+                    Nothing
 
-    else
-        Nothing
+                else
+                    Just taeg
+            )
 
 
 annual_interest_rate : Maybe Float -> List Days.Installment -> String
@@ -124,7 +141,7 @@ annual_interest_rate maybe_purchaseAmount paymentPlan =
             maybe_purchaseAmount
                 |> Maybe.andThen
                     (\purchaseAmount ->
-                        optimal_interest_rate (round <| purchaseAmount * 100) paymentPlan
+                        optimal_interest_rate paymentPlan
                     )
     in
     case maybe_taeg of

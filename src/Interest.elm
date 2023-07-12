@@ -147,19 +147,19 @@ getCreditPaymentPlan : Int -> String -> Int -> Int -> List Installment
 getCreditPaymentPlan installmentsCount startingDate purchaseAmount customerFee =
     let
         dates =
-            List.map Days.toString <| Days.schedulePaymentDates installmentsCount (Days.toPosix startingDate)
+            List.map Days.toString <| Days.schedulePaymentDates (installmentsCount + 1) (Days.toPosix startingDate)
 
         totalAmountPhasing =
             Days.getPurchaseAmountPhasing installmentsCount (purchaseAmount + customerFee)
 
         zeros =
-            List.repeat installmentsCount 0
+            List.repeat (installmentsCount + 1) 0
 
         daysBetweenPayments =
             startingDate
                 |> Days.toPosix
-                |> Days.timeBetweenPayments installmentsCount
-                |> Days.buildPlanDays installmentsCount
+                |> Days.timeBetweenPayments (installmentsCount + 1)
+                |> Days.buildPlanDays (installmentsCount + 1)
                 |> List.foldl (\nbDaysFromStartDate acc -> nbDaysFromStartDate - List.sum acc :: acc) []
                 |> List.reverse
 
@@ -178,7 +178,7 @@ getCreditPaymentPlan installmentsCount startingDate purchaseAmount customerFee =
         Just taeg ->
             let
                 ( _, purchaseAmountPhasing, interestPhasing ) =
-                    List.map2 Tuple.pair totalAmountPhasing (0 :: daysBetweenPayments)
+                    List.map2 Tuple.pair totalAmountPhasing daysBetweenPayments
                         |> List.foldl
                             (\( totalAmount, days ) ( capitalLeftToPay, purchaseAcc, interestAcc ) ->
                                 let
@@ -186,12 +186,8 @@ getCreditPaymentPlan installmentsCount startingDate purchaseAmount customerFee =
                                         rateWithinDays taeg days
 
                                     interest =
-                                        if days == 0 then
-                                            0
-
-                                        else
-                                            (capitalLeftToPay * monthlyRate)
-                                                |> round
+                                        (capitalLeftToPay * monthlyRate)
+                                            |> round
 
                                     amount =
                                         totalAmount - interest

@@ -1,4 +1,4 @@
-module Days exposing (Installment, buildPlanDays, getPNXPaymentPlan, getPurchaseAmountPhasing, getWeeksPaymentPlan, schedulePaymentDates, timeBetweenPayments, toPosix, toString)
+module Days exposing (Installment, buildPlanDays, getPurchaseAmountPhasing, schedulePaymentDates, timeBetweenPayments, toPosix, toString)
 
 import Iso8601
 import Time exposing (Month(..), Posix, utc)
@@ -70,57 +70,3 @@ getPurchaseAmountPhasing installmentsCount purchaseAmount =
             purchaseAmount - ((installmentsCount - 1) * after)
     in
     first :: List.repeat (installmentsCount - 1) after
-
-
-getPNXPaymentPlan : Int -> String -> Int -> Int -> List Installment
-getPNXPaymentPlan installmentsCount startingDate purchaseAmount customerFee =
-    let
-        dates =
-            List.map toString <| schedulePaymentDates installmentsCount (toPosix startingDate)
-
-        purchaseAmountPhasing =
-            getPurchaseAmountPhasing installmentsCount purchaseAmount
-
-        totalAmountPhasing =
-            case purchaseAmountPhasing of
-                [] ->
-                    []
-
-                x :: xs ->
-                    (x + customerFee) :: xs
-
-        customerFeePhasing =
-            customerFee :: List.repeat (installmentsCount - 1) 0
-    in
-    List.map4 Installment
-        dates
-        totalAmountPhasing
-        purchaseAmountPhasing
-        customerFeePhasing
-
-
-getWeeksPaymentPlan : Int -> String -> Int -> Int -> List Installment
-getWeeksPaymentPlan installmentsCount startingDate purchaseAmount customerFee =
-    let
-        dates =
-            List.map toString <| schedulePaymentDates installmentsCount (toPosix startingDate)
-
-        purchaseAmountPhasing =
-            getPurchaseAmountPhasing installmentsCount purchaseAmount
-
-        totalAmountPhasing =
-            case purchaseAmountPhasing of
-                [] ->
-                    []
-
-                x :: xs ->
-                    (x + customerFee) :: xs
-
-        customerFeePhasing =
-            customerFee :: List.repeat (installmentsCount - 1) 0
-    in
-    List.map4 Installment
-        dates
-        totalAmountPhasing
-        purchaseAmountPhasing
-        customerFeePhasing
