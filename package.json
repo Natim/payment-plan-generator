@@ -4,13 +4,13 @@
   "description": "Payment Plan Generator",
   "scripts": {
     "analyse": "elm-analyse",
-    "build": "npm run cleanup && npm run copy-assets && elm make src/PaymentPlanGenerator.elm src/WeeklyPaymentPlanGenerator.elm --output=build/app.js --optimize && uglifyjs build/app.js --compress 'pure_funcs=\"F2,F3,F4,F5,F6,F7,F8,F9,A2,A3,A4,A5,A6,A7,A8,A9\",pure_getters,keep_fargs=false,unsafe_comps,unsafe' | uglifyjs --mangle --output build/app.min.js && mv build/app.min.js build/app.js",
-    "build-with-taeg": "npm run cleanup && npm run copy-assets && elm make src/PaymentPlanGenerator.elm src/WeeklyPaymentPlanGenerator.elm --output=build/app.js --optimize && uglifyjs build/app.js --compress 'pure_funcs=\"F2,F3,F4,F5,F6,F7,F8,F9,A2,A3,A4,A5,A6,A7,A8,A9\",pure_getters,keep_fargs=false,unsafe_comps,unsafe' | uglifyjs --mangle --output build/app.min.js && mv build/app.min.js build/app.js",
+    "build": "npm run cleanup && npm run copy-assets && elm make src/PaymentPlanGenerator.elm --output=build/app.js --optimize && uglifyjs build/app.js --compress 'pure_funcs=\"F2,F3,F4,F5,F6,F7,F8,F9,A2,A3,A4,A5,A6,A7,A8,A9\",pure_getters,keep_fargs=false,unsafe_comps,unsafe' | uglifyjs --mangle --output build/app.min.js && mv build/app.min.js build/app.js",
+    "build-with-taeg": "npm run cleanup && npm run copy-assets && elm make src/PaymentPlanGenerator.elm --output=build/app.js --optimize && uglifyjs build/app.js --compress 'pure_funcs=\"F2,F3,F4,F5,F6,F7,F8,F9,A2,A3,A4,A5,A6,A7,A8,A9\",pure_getters,keep_fargs=false,unsafe_comps,unsafe' | uglifyjs --mangle --output build/app.min.js && mv build/app.min.js build/app.js",
     "copy-assets": "rimraf build && mkdir build && cp -r public/* build",
     "cleanup": "rimraf elm-stuff/",
-    "debug": "elm-live src/PaymentPlanGenerator.elm src/WeeklyPaymentPlanGenerator.elm --port=3000 --dir=public/ -- --output=public/app.js --debug",
+    "debug": "elm-live src/PaymentPlanGenerator.elm --port=3000 --dir=public/ -- --output=public/app.js --debug",
     "deploy": "npm run build-with-taeg && gh-pages --dist build/",
-    "live": "elm-live src/PaymentPlanGenerator.elm src/WeeklyPaymentPlanGenerator.elm --port=3000 --dir=public/ -- --output=public/app.js",
+    "live": "elm-live src/PaymentPlanGenerator.elm --port=3000 --dir=public/ -- --output=public/app.js",
     "test": "elm-test"
   },
   "repository": {
